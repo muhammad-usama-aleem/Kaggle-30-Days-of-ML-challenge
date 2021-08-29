@@ -4,23 +4,23 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 # Importing the train_dataset
-train_dataset = pd.read_csv('train.csv', index_col="id")
+train_dataset = pd.read_csv('../input/30-days-of-ml/train.csv', index_col="id")
 x_train = train_dataset.iloc[:, :-1].values
 y_train = train_dataset.iloc[:, -1].values
 
 # Importing the test_dataset
-test_dataset = pd.read_csv('test.csv', index_col="id")
+test_dataset = pd.read_csv('../input/30-days-of-ml/test.csv', index_col="id")
 x_test = test_dataset.iloc[:, :].values
 
 # Encoding categorical data
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from sklearn.compose import ColumnTransformer
-
 labelencoder_x = LabelEncoder()
 
 for count in range(0, 10):
     x_train[:, count] = labelencoder_x.fit_transform(x_train[:, count])
     x_test[:, count] = labelencoder_x.fit_transform(x_test[:, count])
+
 
 # onehotencoder = ColumnTransformer(
 #     [('one_hot_encoder', OneHotEncoder(categories='auto'), [A, B, C, D, E, F, G, H, I, J, K])],
@@ -32,23 +32,17 @@ for count in range(0, 10):
 # print(copy_x_train)
 
 
-# dividing training and validating data
-from sklearn.model_selection import train_test_split
-
-from sklearn.tree import DecisionTreeRegressor
-
-regressor = DecisionTreeRegressor(random_state=0)
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+regressor = RandomForestRegressor(random_state=1, n_estimators=500, n_jobs=-1, warm_start=True)
 regressor.fit(x_train, y_train)
+rfr_predict = regressor.predict(x_test)
 
-# Predicting a new result
-y_predict = regressor.predict(x_test)
+gbr_model = GradientBoostingRegressor(random_state=1, n_estimators=500)
+gbr_model.fit(x_train, y_train)
+gbr_val_predictions = gbr_model.predict(x_test)
 
-"""# to find the error
-from sklearn import metrics
-err = metrics.mean_squared_error(y_val, y_predict)
-err = np.square(err)
-print(err)"""
+final_prediction = (rfr_predict + gbr_val_predictions) /2
 
-data = pd.read_csv("sample_submission.csv")
-data['target'] = regressor.predict(x_test)
-data.to_csv('sample_submission.csv')
+data = pd.read_csv("../input/30-days-of-ml/sample_submission.csv")
+data['target'] = final_prediction
+data.to_csv('sample_submission_3.csv', index=False)
